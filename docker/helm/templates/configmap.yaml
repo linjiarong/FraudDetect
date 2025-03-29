@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fraud-detection-config
+data:
+  application-prod.yml: |
+    spring:
+      logging:
+        level:
+          root: INFO
+          com.example.frauddetection: DEBUG
+      security:
+        user:
+          name: {{ .Values.secutity.username }}
+          password: {{ .Values.secutity.password }}
+          roles: ADMIN
+    aws:
+      accessKey: {{ .Values.aws.accessKey }}
+      secretKey: {{ .Values.aws.secretKey }}
+      region: {{ .Values.aws.region }}
+    fraud-detection:
+      pool-size: {{ .Values.fraudDetectionService.poolSize }}
+      batch-size: {{ .Values.fraudDetectionService.batchSize }}
+      wait-time-seconds: {{ .Values.fraudDetectionService.waitTimeSeconds }}
+      notify-queue: {{ .Values.aws.notifyQueueName }}
+      transaction-queue: {{ .Values.aws.transactionQueueName }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: trans-generator-config
+data:
+  application-prod.yml: |
+    logging:
+      level:
+        root: INFO
+        com.example.frauddetection: DEBUG
+
+    management:
+      endpoints:
+        web:
+          exposure:
+            include: "*"
+    aws:
+      accessKey: {{ .Values.aws.accessKey }}
+      secretKey: {{ .Values.aws.secretKey }}
+      region: {{ .Values.aws.region }}
+    trans-generator:
+      enabled: true
+    queue:
+      name: {{ .Values.aws.transactionQueueName }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cloudwatch-agent-config
+data:
+  config.json: |
+    {
+      "logs": {
+        "logs_collected": {
+          "files": {
+            "collect_list": [
+              {
+                "file_path": "/var/log/app/application.log",
+                "log_group_name": "fraud-detection-service",
+                "log_stream_name": "{instance_id}",
+                "timestamp_format": "%Y-%m-%d %H:%M:%S"
+              }
+            ]
+          }
+        }
+      }
+    }

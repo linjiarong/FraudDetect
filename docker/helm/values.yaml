@@ -1,0 +1,47 @@
+image:
+  repositoryDomain: "your-docker-repo/fraud-detection-service"
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  name: "fraud-detection-service-account"
+
+secutity:
+  username: "admin"
+  password: "admin123"
+fraudDetectionService:
+  version: "1.0.0"
+  poolSize: 4
+  batchSize: 4
+  waitTimeSeconds: 5
+  replicaCount: 1
+  javaOpts: "-Xms512m -Xmx512m -XX:+UseG1GC"
+  autoscaling:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 80
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 2000m
+      memory: 256Mi
+transGenerator:
+  version: "1.0.0"
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+aws:
+  accessKey: ""  #if using IAM roles, leave this empty
+  secretKey: ""
+  region: "ap-east-1"
+  transactionQueueName: "transaction-queue"
+  notifyQueueName: "notify-queue"
+
+

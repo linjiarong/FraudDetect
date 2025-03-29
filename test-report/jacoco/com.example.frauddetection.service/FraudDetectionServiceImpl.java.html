@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FraudDetectionServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fraud Detection Service</a> &gt; <a href="index.source.html" class="el_package">com.example.frauddetection.service</a> &gt; <span class="el_source">FraudDetectionServiceImpl.java</span></div><h1>FraudDetectionServiceImpl.java</h1><pre class="source lang-java linenums">package com.example.frauddetection.service;
+
+import com.amazonaws.services.sqs.AmazonSQS;
+import com.amazonaws.services.sqs.model.ReceiveMessageRequest;
+import com.amazonaws.services.sqs.model.ReceiveMessageResult;
+import com.example.frauddetection.model.Transaction;
+import com.example.frauddetection.util.RuleEngine;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import lombok.extern.log4j.Log4j2;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+/**
+ * FraudDetectionServiceImpl is responsible for detecting fraudulent transactions
+ * and notifying the appropriate queue.
+ */
+@Service
+<span class="fc" id="L27">@Log4j2</span>
+public class FraudDetectionServiceImpl implements FraudDetectionService {
+    // RuleEngine is a custom class that evaluates the transaction based on defined rules
+    private final RuleEngine ruleEngine;
+
+    // The name of the queue to send notifications
+    @Value(&quot;${fraud-detection.notify-queue}&quot;)
+    private String notifyQueue;
+
+    // The name of the queue to receive transactions
+    @Value(&quot;${fraud-detection.transaction-queue}&quot;)
+    private String transactionQueue;
+
+    // The Amazon SQS client used to interact with AWS SQS
+    private final AmazonSQS amazonSQSClient;
+
+    // The ObjectMapper used for JSON serialization/deserialization
+    private final ObjectMapper objectMapper; 
+
+    // The batch size for receiving messages from the queue
+    @Value(&quot;${fraud-detection.batch-size:5}&quot;)
+    private Integer batchSize;
+
+    // The wait time for receiving messages from the queue
+    @Value(&quot;${fraud-detection.wait-time-seconds:2}&quot;)
+    private Integer waitTimeSeconds;
+
+    // The pool size for the thread pool used to process messages
+    @Value(&quot;${fraud-detection.pool-size:1}&quot;)
+    private Integer poolSize;
+
+    // The executor service used for processing messages in parallel
+    // This allows multiple messages to be processed concurrently
+    // and improves the performance of the service
+    private final ExecutorService executorService;
+    
+    // Flag to control whether the service is running
+    // This can be used to stop the service gracefully
+    // when the application is shutting down
+    // The default value is true, meaning the service is running
+<span class="fc" id="L67">    @Value(&quot;${fraud-detection.enabled:true}&quot;)       </span>
+    private boolean isRunning = true;
+
+    /**
+     * Constructor for FraudDetectionServiceImpl.
+     *
+     * @param ruleEngine       The RuleEngine instance used for fraud detection.
+     * @param amazonSQSClient  The AmazonSQS client used to interact with AWS SQS.
+     * @param objectMapper     The ObjectMapper used for JSON serialization/deserialization.
+     * @param poolSize         The size of the thread pool for processing messages.
+     */
+    @Autowired
+<span class="fc" id="L79">    public FraudDetectionServiceImpl(RuleEngine ruleEngine, AmazonSQS amazonSQSClient, ObjectMapper objectMapper, @Value(&quot;${fraud-detection.pool-size:1}&quot;) Integer poolSize) {</span>
+<span class="fc" id="L80">        this.ruleEngine = ruleEngine;</span>
+<span class="fc" id="L81">        this.amazonSQSClient = amazonSQSClient;</span>
+<span class="fc" id="L82">        this.objectMapper = objectMapper;</span>
+<span class="fc" id="L83">        this.executorService = Executors.newFixedThreadPool(poolSize);</span>
+<span class="fc" id="L84">    }</span>
+
+    /**
+     * Detects fraud for the given transaction.
+     *
+     * @param transaction The transaction to be evaluated.
+     * @return true if fraud is detected, false otherwise.
+     */
+    private boolean detectFraud(Transaction transaction) {
+<span class="fc" id="L93">        return ruleEngine.evaluate(transaction);</span>
+    }
+
+    /**
+     * Starts a background thread to continuously process messages from the queue.
+     * This method is called during application startup to initiate message processing.
+     */
+    @PostConstruct
+    public void startProcessingThread() {
+<span class="fc bfc" id="L102" title="All 2 branches covered.">        if(isRunning) {</span>
+<span class="fc" id="L103">            new Thread(() -&gt; {</span>
+<span class="pc bpc" id="L104" title="1 of 2 branches missed.">                while (isRunning) {</span>
+                    try {
+<span class="fc" id="L106">                        detectFraudAndNotify();</span>
+<span class="fc" id="L107">                        Thread.sleep(1000);</span>
+<span class="nc" id="L108">                    } catch (InterruptedException e) {</span>
+<span class="nc" id="L109">                        log.error(&quot;Thread interrupted: {}&quot;, e.getMessage());</span>
+<span class="nc" id="L110">                        Thread.currentThread().interrupt();</span>
+<span class="pc" id="L111">                    }</span>
+                }
+<span class="pc" id="L113">            }).start();</span>
+        }
+<span class="fc" id="L115">    }</span>
+
+    /**
+     * Detects fraudulent transactions and sends notifications for flagged transactions.
+     * This method is called in the background thread to continuously monitor the queue.
+     */
+    @Override
+    public void detectFraudAndNotify() {
+        
+<span class="fc" id="L124">        String queueUrl = amazonSQSClient.getQueueUrl(transactionQueue).getQueueUrl();</span>
+
+<span class="fc" id="L126">        ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest()</span>
+<span class="fc" id="L127">                .withQueueUrl(queueUrl)</span>
+<span class="fc" id="L128">                .withMaxNumberOfMessages(10) </span>
+<span class="fc" id="L129">                .withWaitTimeSeconds(5); </span>
+<span class="fc" id="L130">        ReceiveMessageResult receiveMessageResult = amazonSQSClient.receiveMessage(receiveMessageRequest);</span>
+<span class="fc" id="L131">        log.info(&quot;Received {} messages from queue&quot;, receiveMessageResult.getMessages().size());</span>
+<span class="pc bpc" id="L132" title="1 of 2 branches missed.">        if (!receiveMessageResult.getMessages().isEmpty()) {</span>
+<span class="fc bfc" id="L133" title="All 2 branches covered.">            for (com.amazonaws.services.sqs.model.Message message : receiveMessageResult.getMessages()) {</span>
+<span class="fc" id="L134">                executorService.submit(() -&gt; processMessage(queueUrl, message));</span>
+<span class="fc" id="L135">            }</span>
+        }
+<span class="fc" id="L137">    }</span>
+
+    /**
+     * Processes a single message from the specified SQS queue.
+     * This method is responsible for deserializing the message, detecting fraud,
+     * and sending notifications if necessary.
+     *
+     * @param queueUrl The URL of the SQS queue from which the message was received.
+     * @param message   The SQS message to be processed.
+     */
+    @Override
+    public void processMessage(String queueUrl, com.amazonaws.services.sqs.model.Message message) {
+        try {
+<span class="fc" id="L150">            log.info(&quot;Read Message from queue: {}&quot;, message.getBody());</span>
+
+            // Deserialize the message body to Transaction object
+<span class="fc" id="L153">            Transaction transaction = objectMapper.readValue(message.getBody(), Transaction.class);</span>
+
+<span class="fc" id="L155">            boolean isFraud = detectFraud(transaction);</span>
+<span class="fc" id="L156">            log.info(&quot;Transaction ID: {}, Fraud Detected: {}&quot;, transaction.getId(), isFraud);</span>
+
+<span class="fc bfc" id="L158" title="All 2 branches covered.">            if (isFraud) {</span>
+                // Send notification to the notify queue
+                // Get queue URL for notify queue
+<span class="fc" id="L161">                String notifyQueueUrl = amazonSQSClient.getQueueUrl(notifyQueue).getQueueUrl();</span>
+                // Send the message to the notify queue 
+<span class="fc" id="L163">                amazonSQSClient.sendMessage(notifyQueueUrl, objectMapper.writeValueAsString(transaction));</span>
+<span class="fc" id="L164">                log.info(&quot;Fraud detected. Notification sent to queue: {}&quot;, notifyQueue);</span>
+<span class="fc" id="L165">            } else {</span>
+<span class="fc" id="L166">                log.info(&quot;No fraud detected for transaction ID: {}&quot;, transaction.getId());</span>
+            }
+
+            // Delete the message from the queue after processing
+<span class="fc" id="L170">            amazonSQSClient.deleteMessage(queueUrl, message.getReceiptHandle());</span>
+<span class="fc" id="L171">        } catch (Exception e) {</span>
+            // Handle JSON parsing error or other exceptions
+            // Optionally, you can log the error or send it to a dead-letter queue
+            // For now, just log the error and delete the message
+<span class="fc" id="L175">            log.error(&quot;Error processing message: {}&quot;, message.getBody());</span>
+<span class="fc" id="L176">            log.error(&quot;Error: {}&quot;, e.getMessage());</span>
+<span class="fc" id="L177">            amazonSQSClient.deleteMessage(queueUrl, message.getReceiptHandle());</span>
+    
+<span class="fc" id="L179">        }</span>
+<span class="fc" id="L180">    }</span>
+
+    /**
+     * Stops the fraud detection service and any associated background threads.
+     * This method is called during application shutdown to clean up resources.
+     */
+    @Override
+    @PreDestroy
+    public void stopRuning() {
+<span class="fc" id="L189">        log.info(&quot;Shutting down FraudDetectionService...&quot;);</span>
+<span class="fc" id="L190">        isRunning = false;</span>
+        
+        try {
+<span class="fc" id="L193">            executorService.shutdown();</span>
+<span class="pc bpc" id="L194" title="1 of 2 branches missed.">            if (!executorService.awaitTermination(10, TimeUnit.SECONDS)) {</span>
+<span class="nc" id="L195">                log.warn(&quot;Executor did not terminate in the specified time.&quot;);</span>
+<span class="nc" id="L196">                executorService.shutdownNow();</span>
+            }
+<span class="nc" id="L198">        } catch (InterruptedException e) {</span>
+<span class="nc" id="L199">            log.error(&quot;Thread interrupted while waiting for termination: {}&quot;, e.getMessage());</span>
+<span class="nc" id="L200">            executorService.shutdownNow();</span>
+<span class="nc" id="L201">            Thread.currentThread().interrupt();</span>
+<span class="fc" id="L202">        }</span>
+<span class="fc" id="L203">        log.info(&quot;FraudDetectionService shutdown complete.&quot;);</span>
+<span class="fc" id="L204">    }</span>
+    /**
+     * Sets the running state of the service.
+     * This method can be used to control the execution of background threads.
+     *
+     * @param running The new running state of the service.
+     */
+    @Override
+    public void setRunning(boolean running) {
+<span class="fc" id="L213">        this.isRunning = running;</span>
+<span class="fc" id="L214">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

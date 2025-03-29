@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DroolsConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fraud Detection Service</a> &gt; <a href="index.source.html" class="el_package">com.example.frauddetection.config</a> &gt; <span class="el_source">DroolsConfig.java</span></div><h1>DroolsConfig.java</h1><pre class="source lang-java linenums">package com.example.frauddetection.config;
+
+import java.io.IOException;
+import org.kie.api.KieServices;
+import org.kie.api.builder.KieBuilder;
+import org.kie.api.builder.KieFileSystem;
+import org.kie.api.builder.KieModule;
+import org.kie.api.builder.KieRepository;
+import org.kie.api.builder.ReleaseId;
+import org.kie.api.event.rule.ObjectDeletedEvent;
+import org.kie.api.event.rule.ObjectInsertedEvent;
+import org.kie.api.event.rule.ObjectUpdatedEvent;
+import org.kie.api.event.rule.RuleRuntimeEventListener;
+import org.kie.api.runtime.KieContainer;
+import org.kie.api.runtime.KieSession;
+import org.kie.internal.io.ResourceFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+/**
+ * Configuration class for setting up Drools in the application.
+ * 
+ * This class initializes and configures the Drools KieSession and KieContainer, 
+ * which are used to execute business rules defined in Drools `.drl` files.
+ * 
+ * Features:
+ * - Loads Drools rules from the classpath (`rules.drl`).
+ * - Configures a `KieSession` for rule execution.
+ * - Adds a global variable (`showResults`) to the session for output display.
+ * - Optionally enables debug logging for rule events (insert, update, delete) 
+ *   based on the `rule.debug` property.
+ * 
+ * Beans:
+ * - `KieSession`: The main session for executing Drools rules.
+ * - `KieContainer`: The container that holds the compiled rules.
+ * 
+ * Properties:
+ * - `rule.debug`: A boolean property to enable or disable debug logging for rule events.
+ * 
+ * Dependencies:
+ * - Drools libraries for rule execution.
+ * - Spring Framework for dependency injection and configuration.
+ * 
+ * Logging:
+ * - Logs the creation of the `KieSession` and `KieContainer`.
+ * - Logs rule events (insert, update, delete) when debug mode is enabled.
+ * 
+ * Example Usage:
+ * - Inject the `KieSession` bean into your service or component to execute rules.
+ * - Place your `.drl` file in the classpath (e.g., `src/main/resources/rules.drl`).
+ * 
+ * Author: linjiarong
+ * Date: 2025-3-28
+ */
+@Configuration
+<span class="fc" id="L59">public class DroolsConfig {</span>
+
+<span class="fc" id="L61">    private static final Logger LOGGER = LoggerFactory.getLogger(DroolsConfig.class);</span>
+
+<span class="fc" id="L63">    private KieServices kieServices = KieServices.Factory.get();</span>
+    @Value(&quot;${rule.debug:false}&quot;)
+    private boolean isRuleDebug;
+
+    @Bean
+    public KieSession getKieSession() throws IOException {
+<span class="fc" id="L69">        LOGGER.info(&quot;Session created...&quot;);</span>
+<span class="fc" id="L70">        KieSession kieSession = getKieContainer().newKieSession();</span>
+<span class="fc" id="L71">        kieSession.setGlobal(&quot;showResults&quot;, new OutputDisplay());</span>
+<span class="pc bpc" id="L72" title="1 of 2 branches missed.">        if(isRuleDebug){</span>
+<span class="fc" id="L73">            kieSession.addEventListener(new RuleRuntimeEventListener() {</span>
+                @Override
+                public void objectInserted(ObjectInsertedEvent event) {
+<span class="fc" id="L76">                    LOGGER.info(&quot;Object inserted \n &quot;</span>
+<span class="fc" id="L77">                            + event.getObject().toString());</span>
+<span class="fc" id="L78">                }</span>
+
+                @Override
+                public void objectUpdated(ObjectUpdatedEvent event) {
+<span class="nc" id="L82">                    LOGGER.info(&quot;Object was updated \n&quot;</span>
+                            + &quot;New Content \n&quot;
+<span class="nc" id="L84">                            + event.getObject().toString());</span>
+<span class="nc" id="L85">                }</span>
+
+                @Override
+                public void objectDeleted(ObjectDeletedEvent event) {
+<span class="nc" id="L89">                    LOGGER.info(&quot;Object retracted \n&quot;</span>
+<span class="nc" id="L90">                            + event.getOldObject().toString());</span>
+<span class="nc" id="L91">                }</span>
+            });
+        }
+        
+<span class="fc" id="L95">        return kieSession;</span>
+    }
+
+    @Bean
+    public KieContainer getKieContainer() throws IOException {
+<span class="fc" id="L100">        LOGGER.info(&quot;Container created...&quot;);</span>
+<span class="fc" id="L101">        getKieRepository();</span>
+<span class="fc" id="L102">        KieBuilder kb = kieServices.newKieBuilder(getKieFileSystem());</span>
+<span class="fc" id="L103">        kb.buildAll();</span>
+<span class="fc" id="L104">        KieModule kieModule = kb.getKieModule();</span>
+<span class="fc" id="L105">        return kieServices.newKieContainer(kieModule.getReleaseId());</span>
+    }
+
+    private void getKieRepository() {
+<span class="fc" id="L109">        final KieRepository kieRepository = kieServices.getRepository();</span>
+<span class="fc" id="L110">        kieRepository.addKieModule(new KieModule() {</span>
+            @Override
+            public ReleaseId getReleaseId() {
+<span class="fc" id="L113">                return kieRepository.getDefaultReleaseId();</span>
+            }
+        });
+<span class="fc" id="L116">    }</span>
+
+    private KieFileSystem getKieFileSystem() throws IOException {
+<span class="fc" id="L119">        KieFileSystem kieFileSystem = kieServices.newKieFileSystem();</span>
+<span class="fc" id="L120">        kieFileSystem.write(ResourceFactory.newClassPathResource(&quot;rules.drl&quot;));</span>
+<span class="fc" id="L121">        return kieFileSystem;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

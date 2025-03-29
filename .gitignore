@@ -1,0 +1,56 @@
+# General
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+*.log.*
+.venv
+# Compiled class files
+*.class
+
+# Maven
+target/
+!**/src/main/**/target/
+!**/src/test/**/target/
+docker/**/*.jar
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+out/
+
+# VS Code
+.vscode/
+
+# Eclipse
+.project
+.classpath
+.settings/
+bin/
+
+# macOS
+*.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Java
+*.war
+*.ear
+
+# Spring Boot
+*.jar
+
+# Test Reports
+test-output/
+surefire-reports/
+jacoco.exec
+
+# Temporary Files
+*.tmp
+*.swp
+*.swo

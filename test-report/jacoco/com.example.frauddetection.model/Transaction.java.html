@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Transaction.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fraud Detection Service</a> &gt; <a href="index.source.html" class="el_package">com.example.frauddetection.model</a> &gt; <span class="el_source">Transaction.java</span></div><h1>Transaction.java</h1><pre class="source lang-java linenums">package com.example.frauddetection.model;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.Date;
+/**
+ * Model class representing a financial transaction.
+ * 
+ * This class is used to encapsulate the details of a transaction, including its ID, amount, 
+ * associated account, timestamp, and any fraud-related information.
+ * 
+ * Features:
+ * - Uses Lombok annotations for boilerplate code reduction (e.g., getters, setters, constructors, and builder pattern).
+ * - Includes a `fraudReason` field to store the reason if the transaction is flagged as fraudulent.
+ * 
+ * Fields:
+ * - `id` (String): Unique identifier for the transaction.
+ * - `amount` (double): The monetary amount of the transaction.
+ * - `accountId` (String): The ID of the account associated with the transaction.
+ * - `timestamp` (Date): The date and time when the transaction occurred.
+ * - `fraudReason` (String): The reason why the transaction was flagged as fraudulent (if applicable).
+ * 
+ * Annotations:
+ * - `@Builder`: Enables the builder pattern for creating instances of the class.
+ * - `@Data`: Generates getters, setters, `toString`, `equals`, and `hashCode` methods.
+ * - `@NoArgsConstructor`: Generates a no-argument constructor.
+ * - `@AllArgsConstructor`: Generates a constructor with all fields as arguments.
+ * 
+ * Example Usage:
+ * ```java
+ * Transaction transaction = Transaction.builder()
+ *     .id(&quot;txn123&quot;)
+ *     .amount(1000.50)
+ *     .accountId(&quot;acc456&quot;)
+ *     .timestamp(new Date())
+ *     .fraudReason(&quot;Suspicious activity detected&quot;)
+ *     .build();
+ * ```
+ * 
+ * Author: linjiarong
+ * Date: 2025-3-28
+ */
+<span class="pc" id="L46">@Builder</span>
+<span class="pc bpc" id="L47" title="36 of 40 branches missed.">@Data</span>
+<span class="fc" id="L48">@NoArgsConstructor</span>
+<span class="fc" id="L49">@AllArgsConstructor</span>
+public class Transaction {
+<span class="fc" id="L51">    private String id;</span>
+<span class="fc" id="L52">    private double amount;</span>
+<span class="fc" id="L53">    private String accountId;</span>
+<span class="fc" id="L54">    private Date timestamp;</span>
+<span class="fc" id="L55">    private String fraudReason;</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

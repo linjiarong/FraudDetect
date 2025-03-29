@@ -1,0 +1,21 @@
+import com.example.frauddetection.model.Transaction;
+
+import com.example.frauddetection.config.OutputDisplay;
+
+global OutputDisplay showResults;
+
+rule "High Transaction Amount"
+    when
+        transaction: Transaction(amount > 9000)
+    then
+        transaction.setFraudReason("High transaction amount");
+        showResults.showText("Fraud detected: High transaction amount - " + transaction.getAmount() + " transId:" + transaction.getId());
+end
+
+rule "Suspicious Account"
+    when
+        transaction: Transaction(accountId contains "bad")
+    then
+        transaction.setFraudReason("Suspicious Account");
+        showResults.showText("Fraud detected: Suspicious account - " + transaction.getAccountId() + " transId:" + transaction.getId());
+end

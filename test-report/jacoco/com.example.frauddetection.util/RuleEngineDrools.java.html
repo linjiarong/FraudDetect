@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RuleEngineDrools.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fraud Detection Service</a> &gt; <a href="index.source.html" class="el_package">com.example.frauddetection.util</a> &gt; <span class="el_source">RuleEngineDrools.java</span></div><h1>RuleEngineDrools.java</h1><pre class="source lang-java linenums">package com.example.frauddetection.util;
+
+import com.example.frauddetection.model.Transaction;
+import org.kie.api.runtime.KieSession;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+/**
+ * RuleEngine implementation using Drools
+ * This class is responsible for evaluating transactions against the rules defined in the Drools rule engine.
+ * @author linjiarong
+ * @date 2025-3-28
+ */
+@Component
+public class RuleEngineDrools implements RuleEngine {
+
+    private final KieSession kieSession;
+    /**
+     * Constructor for RuleEngineDrools
+     * @param kieSession the KieSession used for rule evaluation
+     */
+    @Autowired
+<span class="fc" id="L23">    public RuleEngineDrools(KieSession kieSession) {</span>
+<span class="fc" id="L24">        this.kieSession = kieSession;</span>
+<span class="fc" id="L25">    }</span>
+
+    /**
+     * Evaluates a transaction to determine if it is fraudulent.
+     *
+     * @param transaction the transaction to evaluate
+     * @return true if the transaction is fraudulent, false otherwise
+     */
+    @Override
+    public boolean evaluate(Transaction transaction) {
+<span class="fc" id="L35">        kieSession.insert(transaction);</span>
+<span class="fc" id="L36">        int firedRules = kieSession.fireAllRules();</span>
+<span class="fc bfc" id="L37" title="All 2 branches covered.">        return firedRules &gt; 0; // if any rule is fired, then it is a fraudulent transaction</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

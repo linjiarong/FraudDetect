@@ -1,0 +1,136 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fraud-detection-service
+  labels:
+    app: fraud-detection-service
+    version: {{ .Values.fraudDetectionService.version }}
+spec:
+  {{- if not .Values.fraudDetectionService.autoscaling.enabled }}
+  replicas: {{ .Values.fraudDetectionService.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app: fraud-detection-service
+      version: {{ .Values.fraudDetectionService.version }}
+  template:
+    metadata:
+      labels:
+        app: fraud-detection-service
+        version: {{ .Values.fraudDetectionService.version }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: fraud-detection-service-account
+      containers:
+        - name: fraud-detection-service
+          image: "{{ .Values.image.repositoryPrefix }}/example/fraud-detection-service:{{ .Values.fraudDetectionService.version }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+          - name: JAVA_OPTS
+            value: "{{ .Values.fraudDetectionService.javaOpts }}"
+          - name: SPRING_CONFIG_LOCATION
+            value: "file:/config/application-prod.yml" 
+          ports:
+            - name: http
+              containerPort: 8081
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "curl -u {{ .Values.secutity.username}}:{{ .Values.secutity.password}} -X POST http://localhost:8081/actuator/shutdown"]
+          {{- with .Values.fraudDetectionService.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: config-volume
+              mountPath: /config/application-prod.yml
+              subPath: application-prod.yml
+            - name: app-logs
+              mountPath: /var/log/app
+        - name: cloudwatch-agent
+          image: amazon/cloudwatch-agent:latest
+          volumeMounts:
+            - name: cwagent-config
+              mountPath: /etc/cwagentconfig
+              readOnly: true
+            - name: app-logs
+              mountPath: /var/log/app
+          command: ["/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-runner"]
+          args: ["-config", "/etc/cwagentconfig/config.json"]
+      volumes:
+        - name: config-volume
+          configMap:
+            name: fraud-detection-config
+        - name: cloudwatch-agent-config
+          configMap:
+            name: cloudwatch-agent-config
+        - name: app-logs
+          emptyDir: {}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trans-generator
+  labels:
+    app: trans-generator
+    version: {{ .Values.transGenerator.version }}
+spec:
+  replicas: {{ .Values.transGenerator.replicaCount }}
+  selector:
+    matchLabels:
+      app: trans-generator
+      version: {{ .Values.transGenerator.version }}
+  template:
+    metadata:
+      labels:
+        app: trans-generator
+        version: {{ .Values.transGenerator.version }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: fraud-detection-service-account
+      containers:
+        - name: trans-generator
+          image: "{{ .Values.image.repositoryPrefix }}/example/trans-generator:{{ .Values.transGenerator.version }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+          - name: SPRING_CONFIG_LOCATION
+          value: "file:/config/application-prod.yml" 
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: http
+          {{- with .Values.transGenerator.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: config-volume
+              mountPath: /config/application-prod.yml
+              subPath: application-prod.yml
+      volumes:
+      - name: config-volume
+        configMap:
+          name: trans-generator-config

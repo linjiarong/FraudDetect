@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: fraud-detection-service
+  security:
+    user:
+      name: admin
+      password: admin123
+      roles: ADMIN
+
+server:
+  port: 8081
+
+logging:
+  level:
+    root: INFO
+    com.example.frauddetection: DEBUG
+
+management:
+  endpoints:
+    enabled-by-default: true
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    shutdown:
+      enabled: true 
+
+
+# Additional configurations can be added as needed.
+rule:
+  debug: false
+aws:
+  accessKey: ${AWS_ACCESS_KEY}
+  secretKey: ${AWS_SECRET_KEY}
+  region: ${AWS_REGION:ap-east-1}
+
+fraud-detection:
+  pool-size: 2
+  batch-size: 5
+  wait-time-seconds: 5
+  notify-queue: notify-queue
+  transaction-queue: transaction-queue

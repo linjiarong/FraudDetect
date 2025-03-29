@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: fraud-detection-service
+
+server:
+  port: 8080
+
+logging:
+  level:
+    root: INFO
+    com.example.frauddetection: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+# Additional configurations can be added as needed.
+
+aws:
+  accessKey: ${AWS_ACCESS_KEY}
+  secretKey: ${AWS_SECRET_KEY}
+  region: ap-east-1
+trans-generator:
+  enabled: false
+queue:
+  name: transaction-queue

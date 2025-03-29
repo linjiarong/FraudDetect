@@ -1,0 +1,20 @@
+server:
+  port: 8081
+
+logging:
+  level:
+    root: INFO
+    com.example.frauddetection: DEBUG
+
+aws:
+  accessKey: ${AWS_ACCESS_KEY}
+  secretKey: ${AWS_SECRET_KEY}
+  region: ${AWS_REGION:ap-east-1}
+rule:
+  debug: True
+fraud-detection:
+  enabled: false
+  batch-size: 5
+  wait-time-seconds: 2
+  notify-queue: notify-queue
+  transaction-queue: transaction-queue
