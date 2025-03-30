@@ -1,6 +1,7 @@
 package com.example.frauddetection.config;
 
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.WebIdentityTokenCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
@@ -65,6 +66,7 @@ public class SqsConfig {
         // based on the environment (e.g., local development vs. production)
         if (accessKey == null || accessKey.isEmpty()) {
                 return AmazonSQSClientBuilder.standard()
+                .withCredentials(WebIdentityTokenCredentialsProvider.create())
                 .withRegion(region) 
                 .build();
         }else{
