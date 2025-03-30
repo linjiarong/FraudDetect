@@ -21,10 +21,10 @@ fraudDetectionService:
   resources:
     requests:
       cpu: 100m
-      memory: 128Mi
+      memory: 256Mi
     limits:
       cpu: 2000m
-      memory: 512Mi
+      memory: 1Gi
 transGenerator:
   version: "1.0.0"
   replicaCount: 1
@@ -36,8 +36,8 @@ transGenerator:
       cpu: 500m
       memory: 256Mi
 aws:
-  accessKey: "AKIAXJOQGWJLOTZC2COL"  #if using IAM roles, leave this empty
-  secretKey: "un1J5fkpi2mgLojxTZlJYCzDhPmz6euoc3xOqzBE"
+  accessKey: "your_own_accessKey"  #if using IAM roles, leave this empty
+  secretKey: "your_own_secretKey"  
   region: "ap-southeast-1"
   transactionQueueName: "transaction-queue"
   notifyQueueName: "notify-queue"

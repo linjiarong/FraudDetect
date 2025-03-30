@@ -69,14 +69,10 @@ spec:
             - name: config-volume
               mountPath: /config/application-prod.yml
               subPath: application-prod.yml
-            - name: app-logs
-              mountPath: /var/log/app
       volumes:
         - name: config-volume
           configMap:
             name: fraud-detection-config
-        - name: app-logs
-          emptyDir: {}
 ---
 apiVersion: apps/v1
 kind: Deployment
