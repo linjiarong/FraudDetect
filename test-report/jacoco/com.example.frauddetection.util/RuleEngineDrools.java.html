@@ -6,10 +6,36 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
- * RuleEngine implementation using Drools
+ * RuleEngine implementation using Drools.
+ * 
  * This class is responsible for evaluating transactions against the rules defined in the Drools rule engine.
- * @author linjiarong
- * @date 2025-3-28
+ * It uses a `KieSession` to insert transactions and fire rules, determining whether a transaction is fraudulent.
+ * 
+ * Features:
+ * - Integrates with the Drools rule engine for rule-based evaluation.
+ * - Evaluates transactions by inserting them into the `KieSession` and firing all applicable rules.
+ * - Returns a boolean indicating whether any rules were triggered, marking the transaction as fraudulent if true.
+ * 
+ * Dependencies:
+ * - `KieSession`: The Drools session used for rule evaluation.
+ * - `Transaction`: The model class representing a financial transaction.
+ * 
+ * Methods:
+ * - `evaluate(Transaction transaction)`: Evaluates a transaction and returns `true` if it is flagged as fraudulent.
+ * 
+ * Example Usage:
+ * ```java
+ * Transaction transaction = new Transaction(&quot;txn123&quot;, 1000.50, &quot;acc456&quot;, new Date(), null);
+ * boolean isFraudulent = ruleEngineDrools.evaluate(transaction);
+ * System.out.println(&quot;Is fraudulent: &quot; + isFraudulent);
+ * ```
+ * 
+ * Notes:
+ * - Ensure that the Drools `.drl` files are correctly configured and loaded into the `KieSession`.
+ * - The `KieSession` should be properly managed to avoid memory leaks (e.g., dispose of the session when no longer needed).
+ * 
+ * Author: linjiarong
+ * Date: 2025-3-28
  */
 @Component
 public class RuleEngineDrools implements RuleEngine {
@@ -20,9 +46,9 @@ public class RuleEngineDrools implements RuleEngine {
      * @param kieSession the KieSession used for rule evaluation
      */
     @Autowired
-<span class="fc" id="L23">    public RuleEngineDrools(KieSession kieSession) {</span>
-<span class="fc" id="L24">        this.kieSession = kieSession;</span>
-<span class="fc" id="L25">    }</span>
+<span class="fc" id="L49">    public RuleEngineDrools(KieSession kieSession) {</span>
+<span class="fc" id="L50">        this.kieSession = kieSession;</span>
+<span class="fc" id="L51">    }</span>
 
     /**
      * Evaluates a transaction to determine if it is fraudulent.
@@ -32,9 +58,9 @@ public class RuleEngineDrools implements RuleEngine {
      */
     @Override
     public boolean evaluate(Transaction transaction) {
-<span class="fc" id="L35">        kieSession.insert(transaction);</span>
-<span class="fc" id="L36">        int firedRules = kieSession.fireAllRules();</span>
-<span class="fc bfc" id="L37" title="All 2 branches covered.">        return firedRules &gt; 0; // if any rule is fired, then it is a fraudulent transaction</span>
+<span class="fc" id="L61">        kieSession.insert(transaction);</span>
+<span class="fc" id="L62">        int firedRules = kieSession.fireAllRules();</span>
+<span class="fc bfc" id="L63" title="All 2 branches covered.">        return firedRules &gt; 0; // if any rule is fired, then it is a fraudulent transaction</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

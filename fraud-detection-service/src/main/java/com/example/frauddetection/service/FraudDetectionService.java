@@ -47,7 +47,7 @@ public interface FraudDetectionService {
      * @param notifiQueueUrl      The URL of the notification SQS queue.    
      * @param message   The SQS message to be processed.
      */
-    void processMessage(String transactionQueueUrl, String notifiQueueUrl com.amazonaws.services.sqs.model.Message message);
+    void processMessage(String transactionQueueUrl, String notifiQueueUrl, com.amazonaws.services.sqs.model.Message message);
 
     /**
      * Stops the fraud detection service and any associated background threads.

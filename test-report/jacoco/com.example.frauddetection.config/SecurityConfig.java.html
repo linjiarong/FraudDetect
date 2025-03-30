@@ -37,12 +37,13 @@ import org.springframework.security.web.SecurityFilterChain;
 <span class="fc" id="L37">        http</span>
 <span class="fc" id="L38">            .csrf().disable()</span>
 <span class="fc" id="L39">            .authorizeHttpRequests()</span>
-<span class="fc" id="L40">            .requestMatchers(&quot;/actuator/shutdown&quot;).hasRole(&quot;ADMIN&quot;)</span>
-<span class="fc" id="L41">            .anyRequest().authenticated()</span>
-<span class="fc" id="L42">            .and()</span>
-<span class="fc" id="L43">            .httpBasic();</span>
+<span class="fc" id="L40">            .requestMatchers(&quot;/actuator/health&quot;).permitAll()</span>
+<span class="fc" id="L41">            .requestMatchers(&quot;/actuator/shutdown&quot;).hasRole(&quot;ADMIN&quot;)</span>
+<span class="fc" id="L42">            .anyRequest().authenticated()</span>
+<span class="fc" id="L43">            .and()</span>
+<span class="fc" id="L44">            .httpBasic();</span>
 
-<span class="fc" id="L45">        return http.build();</span>
+<span class="fc" id="L46">        return http.build();</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>
