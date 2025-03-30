@@ -8,6 +8,7 @@ import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import lombok.extern.log4j.Log4j2;
 
 /**
  * Configuration class for setting up Amazon SQS in the application.
@@ -41,6 +42,7 @@ import org.springframework.context.annotation.Configuration;
  * Date: 2025-3-28
  */
 @Configuration
+@Log4j2
 public class SqsConfig {
 
     @Value("${aws.accessKey}")
@@ -65,6 +67,7 @@ public class SqsConfig {
         // This allows for flexibility in using either default credentials or specified ones
         // based on the environment (e.g., local development vs. production)
         if (accessKey == null || accessKey.isEmpty()) {
+                log.info("Build client with IRSA, region {}", region);
                 return AmazonSQSClientBuilder.standard()
                 .withCredentials(WebIdentityTokenCredentialsProvider.create())
                 .withRegion(region) 

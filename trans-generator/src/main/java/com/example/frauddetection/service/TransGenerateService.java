@@ -62,8 +62,9 @@ public class TransGenerateService {
 
     public void publishMessage(String id) {
         try {
+            log.info("Get queue name: {}", queueName);
             GetQueueUrlResult queueUrl = amazonSQSClient.getQueueUrl(queueName);
-            
+            log.info("QueueUrl: {}", queueUrl.getQueueUrl());
             var message =generateRandomTransaction(id);
                     
             var result = amazonSQSClient.sendMessage(queueUrl.getQueueUrl(), objectMapper.writeValueAsString(message));

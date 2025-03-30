@@ -21,6 +21,7 @@
     <properties>
         <java.version>17</java.version>
         <spring.boot.version>2.6.6</spring.boot.version>
+        <aws.sdk.version>1.12.632</aws.sdk.version>
     </properties>
 
     <dependencies>
@@ -40,11 +41,15 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-sqs</artifactId>
-            <version>1.12.632</version>
+            <version>${aws.sdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-sts</artifactId>
+            <version>${aws.sdk.version}</version> 
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

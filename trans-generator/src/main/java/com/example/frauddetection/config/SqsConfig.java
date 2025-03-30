@@ -8,8 +8,10 @@ import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import lombok.extern.log4j.Log4j2;
 
 @Configuration
+@Log4j2
 public class SqsConfig {
 
     @Value("${aws.accessKey}")
@@ -25,6 +27,7 @@ public class SqsConfig {
     public AmazonSQS amazonSQSClient() {
 
         if (accessKey == null || accessKey.isEmpty()) {
+                log.info("Build client with IRSA, region {}", region);
                 return AmazonSQSClientBuilder.standard()
                 .withCredentials(WebIdentityTokenCredentialsProvider.create())
                 .withRegion(region) 

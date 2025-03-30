@@ -2,7 +2,7 @@ FROM openjdk:17-ea-slim
 ARG APP_VERSION
 ENV APP_VERSION="${APP_VERSION}"
 RUN apt-get update && apt-get install -y \
-    curl \
+    curl awscli \
     --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*
 ADD fraud-detection-service-*.jar /

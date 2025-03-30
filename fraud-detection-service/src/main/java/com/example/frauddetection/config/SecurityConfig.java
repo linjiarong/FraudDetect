@@ -37,6 +37,7 @@ public class SecurityConfig {
         http
             .csrf().disable()
             .authorizeHttpRequests()
+            .requestMatchers("/actuator/health").permitAll()
             .requestMatchers("/actuator/shutdown").hasRole("ADMIN")
             .anyRequest().authenticated()
             .and()
