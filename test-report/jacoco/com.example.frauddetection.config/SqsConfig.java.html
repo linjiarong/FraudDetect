@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="zh"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SqsConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fraud Detection Service</a> &gt; <a href="index.source.html" class="el_package">com.example.frauddetection.config</a> &gt; <span class="el_source">SqsConfig.java</span></div><h1>SqsConfig.java</h1><pre class="source lang-java linenums">package com.example.frauddetection.config;
 
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.WebIdentityTokenCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import lombok.extern.log4j.Log4j2;
 
 /**
  * Configuration class for setting up Amazon SQS in the application.
@@ -40,7 +42,8 @@ import org.springframework.context.annotation.Configuration;
  * Date: 2025-3-28
  */
 @Configuration
-<span class="fc" id="L43">public class SqsConfig {</span>
+<span class="fc" id="L45">@Log4j2</span>
+<span class="fc" id="L46">public class SqsConfig {</span>
 
     @Value(&quot;${aws.accessKey}&quot;)
     private String accessKey;
@@ -63,16 +66,18 @@ import org.springframework.context.annotation.Configuration;
         // Otherwise, create the client with the provided credentials
         // This allows for flexibility in using either default credentials or specified ones
         // based on the environment (e.g., local development vs. production)
-<span class="pc bpc" id="L66" title="2 of 4 branches missed.">        if (accessKey == null || accessKey.isEmpty()) {</span>
-<span class="nc" id="L67">                return AmazonSQSClientBuilder.standard()</span>
-<span class="nc" id="L68">                .withRegion(region) </span>
-<span class="nc" id="L69">                .build();</span>
+<span class="pc bpc" id="L69" title="2 of 4 branches missed.">        if (accessKey == null || accessKey.isEmpty()) {</span>
+<span class="nc" id="L70">                log.info(&quot;Build client with IRSA, region {}&quot;, region);</span>
+<span class="nc" id="L71">                return AmazonSQSClientBuilder.standard()</span>
+<span class="nc" id="L72">                .withCredentials(WebIdentityTokenCredentialsProvider.create())</span>
+<span class="nc" id="L73">                .withRegion(region) </span>
+<span class="nc" id="L74">                .build();</span>
         }else{
-<span class="fc" id="L71">            BasicAWSCredentials awsCredentials = new BasicAWSCredentials(accessKey, secretKey);</span>
-<span class="fc" id="L72">            return AmazonSQSClientBuilder.standard()</span>
-<span class="fc" id="L73">                    .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))</span>
-<span class="fc" id="L74">                    .withRegion(region)</span>
-<span class="fc" id="L75">                    .build();</span>
+<span class="fc" id="L76">            BasicAWSCredentials awsCredentials = new BasicAWSCredentials(accessKey, secretKey);</span>
+<span class="fc" id="L77">            return AmazonSQSClientBuilder.standard()</span>
+<span class="fc" id="L78">                    .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))</span>
+<span class="fc" id="L79">                    .withRegion(region)</span>
+<span class="fc" id="L80">                    .build();</span>
         }
     }
 

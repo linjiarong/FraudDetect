@@ -122,10 +122,8 @@ public class FraudDetectionServiceImpl implements FraudDetectionService {
      * This method is called in the background thread to continuously monitor the queue.
      */
     @Override
-    public void detectFraudAndNotify(string transactionQueueUrl, String notifyQueueUrl) {
+    public void detectFraudAndNotify(String transactionQueueUrl, String notifyQueueUrl) {
         
-        
-
         ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest()
                 .withQueueUrl(transactionQueueUrl)
                 .withMaxNumberOfMessages(10) 
@@ -150,7 +148,7 @@ public class FraudDetectionServiceImpl implements FraudDetectionService {
     @Override
     public void processMessage(String transactionQueueUrl, String notifyQueueUrl, com.amazonaws.services.sqs.model.Message message) {
         try {
-            log.info("Read Message from queue: {}", message.getBody());
+            log.debug("Read Message from queue: {}", message.getBody());
 
             // Deserialize the message body to Transaction object
             Transaction transaction = objectMapper.readValue(message.getBody(), Transaction.class);

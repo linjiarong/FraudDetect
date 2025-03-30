@@ -38,6 +38,9 @@ public class FraudDetectionServiceTest {
     @Value("${fraud-detection.transaction-queue}")
     private String transactionQueue;
 
+    @Value("${fraud-detection.notify-queue}")
+    private String notifyQueue;
+
     @Test
     void testFraudDetectionServiceBeanInjection() {
         assertTrue(this.fraudDetectionService != null, "FraudDetectionService bean should be injected");
@@ -48,7 +51,9 @@ public class FraudDetectionServiceTest {
     void testDetectFraudulentTransaction() throws InterruptedException {
         try {
             publishTestTransaction();
-            this.fraudDetectionService.detectFraudAndNotify();
+            String transactionQueueUrl = amazonSQSClient.getQueueUrl(transactionQueue).getQueueUrl();
+            String notifyQueueUrl = amazonSQSClient.getQueueUrl(notifyQueue).getQueueUrl();
+            this.fraudDetectionService.detectFraudAndNotify(transactionQueueUrl, notifyQueueUrl);
             Thread.sleep(3000); // wait for seconds to let the thread finished
         } catch (InterruptedException e) {
             e.printStackTrace();
