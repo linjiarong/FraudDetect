@@ -5,15 +5,31 @@ metadata:
 data:
   application-prod.yml: |
     spring:
-      logging:
-        level:
-          root: INFO
-          com.example.frauddetection: DEBUG
+      application:
+        name: fraud-detection-service
       security:
         user:
           name: {{ .Values.secutity.username }}
           password: {{ .Values.secutity.password }}
           roles: ADMIN
+    server:
+      port: 8081
+    logging:
+      level:
+        root: INFO
+        com.example.frauddetection: DEBUG
+
+    management:
+      endpoints:
+        enabled-by-default: true
+        web:
+          exposure:
+            include: "*"
+      endpoint:
+        shutdown:
+          enabled: true
+    rule:
+      debug: false
     aws:
       accessKey: {{ .Values.aws.accessKey }}
       secretKey: {{ .Values.aws.secretKey }}
@@ -31,6 +47,11 @@ metadata:
   name: trans-generator-config
 data:
   application-prod.yml: |
+    spring:
+      application:
+        name: trans-generator
+    server:
+      port: 8080
     logging:
       level:
         root: INFO
@@ -49,26 +70,3 @@ data:
       enabled: true
     queue:
       name: {{ .Values.aws.transactionQueueName }}
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: cloudwatch-agent-config
-data:
-  config.json: |
-    {
-      "logs": {
-        "logs_collected": {
-          "files": {
-            "collect_list": [
-              {
-                "file_path": "/var/log/app/application.log",
-                "log_group_name": "fraud-detection-service",
-                "log_stream_name": "{instance_id}",
-                "timestamp_format": "%Y-%m-%d %H:%M:%S"
-              }
-            ]
-          }
-        }
-      }
-    }

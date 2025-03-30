@@ -1,6 +1,6 @@
 spring:
   application:
-    name: fraud-detection-service
+    name: trans-generator
 
 server:
   port: 8080

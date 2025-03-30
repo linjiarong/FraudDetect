@@ -100,10 +100,13 @@ public class FraudDetectionServiceImpl implements FraudDetectionService {
     @PostConstruct
     public void startProcessingThread() {
         if(isRunning) {
+            String transactionQueueUrl = amazonSQSClient.getQueueUrl(transactionQueue).getQueueUrl();
+            String notifyQueueUrl = amazonSQSClient.getQueueUrl(notifyQueue).getQueueUrl();
+
             new Thread(() -> {
                 while (isRunning) {
                     try {
-                        detectFraudAndNotify();
+                        detectFraudAndNotify(transactionQueueUrl, notifyQueueUrl);
                         Thread.sleep(1000);
                     } catch (InterruptedException e) {
                         log.error("Thread interrupted: {}", e.getMessage());
@@ -119,19 +122,19 @@ public class FraudDetectionServiceImpl implements FraudDetectionService {
      * This method is called in the background thread to continuously monitor the queue.
      */
     @Override
-    public void detectFraudAndNotify() {
+    public void detectFraudAndNotify(string transactionQueueUrl, String notifyQueueUrl) {
         
-        String queueUrl = amazonSQSClient.getQueueUrl(transactionQueue).getQueueUrl();
+        
 
         ReceiveMessageRequest receiveMessageRequest = new ReceiveMessageRequest()
-                .withQueueUrl(queueUrl)
+                .withQueueUrl(transactionQueueUrl)
                 .withMaxNumberOfMessages(10) 
                 .withWaitTimeSeconds(5); 
         ReceiveMessageResult receiveMessageResult = amazonSQSClient.receiveMessage(receiveMessageRequest);
         log.info("Received {} messages from queue", receiveMessageResult.getMessages().size());
         if (!receiveMessageResult.getMessages().isEmpty()) {
             for (com.amazonaws.services.sqs.model.Message message : receiveMessageResult.getMessages()) {
-                executorService.submit(() -> processMessage(queueUrl, message));
+                executorService.submit(() -> processMessage(transactionQueueUrl, notifyQueueUrl,  message));
             }
         }
     }
@@ -145,7 +148,7 @@ public class FraudDetectionServiceImpl implements FraudDetectionService {
      * @param message   The SQS message to be processed.
      */
     @Override
-    public void processMessage(String queueUrl, com.amazonaws.services.sqs.model.Message message) {
+    public void processMessage(String transactionQueueUrl, String notifyQueueUrl, com.amazonaws.services.sqs.model.Message message) {
         try {
             log.info("Read Message from queue: {}", message.getBody());
 
@@ -156,9 +159,6 @@ public class FraudDetectionServiceImpl implements FraudDetectionService {
             log.info("Transaction ID: {}, Fraud Detected: {}", transaction.getId(), isFraud);
 
             if (isFraud) {
-                // Send notification to the notify queue
-                // Get queue URL for notify queue
-                String notifyQueueUrl = amazonSQSClient.getQueueUrl(notifyQueue).getQueueUrl();
                 // Send the message to the notify queue 
                 amazonSQSClient.sendMessage(notifyQueueUrl, objectMapper.writeValueAsString(transaction));
                 log.info("Fraud detected. Notification sent to queue: {}", notifyQueue);
@@ -167,14 +167,14 @@ public class FraudDetectionServiceImpl implements FraudDetectionService {
             }
 
             // Delete the message from the queue after processing
-            amazonSQSClient.deleteMessage(queueUrl, message.getReceiptHandle());
+            amazonSQSClient.deleteMessage(transactionQueueUrl, message.getReceiptHandle());
         } catch (Exception e) {
             // Handle JSON parsing error or other exceptions
             // Optionally, you can log the error or send it to a dead-letter queue
             // For now, just log the error and delete the message
             log.error("Error processing message: {}", message.getBody());
             log.error("Error: {}", e.getMessage());
-            amazonSQSClient.deleteMessage(queueUrl, message.getReceiptHandle());
+            amazonSQSClient.deleteMessage(transactionQueueUrl, message.getReceiptHandle());
     
         }
     }

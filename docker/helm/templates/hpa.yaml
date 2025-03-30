@@ -2,15 +2,8 @@
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: 
-  labels:
-    app: fraud-detection-service
-    version: {{ .Values.fraudDetectionService.version }}
+  name: fraud-detection-service
 spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: fraud-detection-service
   minReplicas: {{ .Values.fraudDetectionService.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.fraudDetectionService.autoscaling.maxReplicas }}
   metrics:
@@ -30,4 +23,10 @@ spec:
           type: Utilization
           averageUtilization: {{ .Values.fraudDetectionService.autoscaling.targetMemoryUtilizationPercentage }}
     {{- end }}
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: fraud-detection-service
 {{- end }}
+
+

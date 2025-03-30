@@ -27,8 +27,10 @@ public interface FraudDetectionService {
     /**
      * Detects fraudulent transactions and sends notifications for flagged transactions.
      * This method should be called in the background thread to continuously monitor the queue.
+     * @param transactionQueueUrl The URL of the SQS queue from which the message was received.
+     * @param notifyQueueUrl      The URL of the notification SQS queue.
      */
-    void detectFraudAndNotify();
+    void detectFraudAndNotify(String transactionQueueUrl, String notifyQueueUrl);
 
     /**
      * Starts a background thread to continuously process messages from the queue.
@@ -41,10 +43,11 @@ public interface FraudDetectionService {
      * This method is responsible for deserializing the message, detecting fraud,
      * and sending notifications if necessary.
      *
-     * @param queueUrl The URL of the SQS queue from which the message was received.
+     * @param transactionQueueUrl The URL of the SQS queue from which the message was received.
+     * @param notifiQueueUrl      The URL of the notification SQS queue.    
      * @param message   The SQS message to be processed.
      */
-    void processMessage(String queueUrl, com.amazonaws.services.sqs.model.Message message);
+    void processMessage(String transactionQueueUrl, String notifiQueueUrl com.amazonaws.services.sqs.model.Message message);
 
     /**
      * Stops the fraud detection service and any associated background threads.

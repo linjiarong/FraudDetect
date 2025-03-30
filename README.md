@@ -122,11 +122,11 @@ Decouples components, ensuring resilience and fault tolerance.
    export AWS_SECRET_KEY=your_own_secret_key
    ```
    These variables will be read by the spring boot in the bootstrap, avoiding hardcode in the application.yaml. 
-
    - **Create EKS cluster:**
    Follow https://docs.aws.amazon.com/eks/latest/userguide/create-cluster.html to create your own EKS cluster. 
-   - **Create ECR repository.**
-   Use the following script to create the ECR repository to store the docker image.
+
+
+   - **Run the aws/init.py script.**   
    ```
       % cd docker/aws
       % python -m venv .venv
@@ -137,10 +137,19 @@ Decouples components, ensuring resilience and fault tolerance.
       Repository URI: xxxxxxxxxxxx.dkr.ecr.ap-east-1.amazonaws.com/example/fraud-detection-service
       Repository 'example/trans-generator' created successfully.
       Repository URI: xxxxxxxxxxxx.dkr.ecr.ap-east-1.amazonaws.com/example/trans-generator
+      Queue 'notify-queue' created successfully.
+      Queue URL: https://sqs.ap-east-1.amazonaws.com/xxxxxxxxxxxx/notify-queue
+      Queue 'transaction-queue' created successfully.
+      Queue URL: https://sqs.ap-east-1.amazonaws.com/xxxxxxxxxxxx/transaction-queue
+      Policy 'FraudDetectionPolicy' created successfully.
+      Policy ARN: arn:aws:iam::xxxxxxxxxxxx:policy/FraudDetectionPolicy
    ```
-   Please Markdown the URI Domain。 
-
-   - **Create an IAM policy for accessing SQS and CloudWatch service**  
+   
+   a. create the ECR repository to store the docker image.  
+      Please Markdown the URI Domain。   
+   b. create the Standard Queues (notify-queue, transaction-queue)  
+   c. create the IAM Policy for accessing SQS and CloudWatch service
+      Please markdown the policy Arn. 
    ```
    {
       "Version": "2012-10-17",
@@ -151,10 +160,7 @@ Decouples components, ensuring resilience and fault tolerance.
                "sqs:SendMessage",
                "sqs:ReceiveMessage",
                "sqs:DeleteMessage",
-               "sqs:GetQueueAttributes",
-               "logs:CreateLogGroup",
-               "logs:CreateLogStream",
-               "logs:PutLogEvents"
+               "sqs:GetQueueAttributes"
             ],
             "Resource": "*"
          }
@@ -162,16 +168,19 @@ Decouples components, ensuring resilience and fault tolerance.
    }
    ```
    For production usage the Resource should be more specific.
-   - Create IAM Service Account for the App
+
+   - **Create IAM Service Account for the App**
    ```
    eksctl create iamserviceaccount \
       --name fraud-detection-service-account \
       --namespace default \
-      --cluster <cluster-name> \
-      --attach-policy-arn arn:aws:iam::<account-id>:policy/<policy-name> \
+      --cluster devops \
+      --attach-policy-arn arn:aws:iam::xxxxxxxxxxxx:policy/FraudDetectionPolicy \
       --approve
    ```
    You get the service account using in the eks cluster deployment. 
+   
+   Avoid the leak of AK/SK, IRSA should be used in the production environment.
 
 3. **Build the application:**
    Before you run the following script, the REPO_DOMAIN variable should be replaced with the value in step 
@@ -190,8 +199,6 @@ Decouples components, ensuring resilience and fault tolerance.
    cd docker
    helm install frauddetection ./helm
    ```
-
-   
 
 ## Testing
 
