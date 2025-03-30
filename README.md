@@ -29,7 +29,7 @@ Ensures scalability and high availability by orchestrating containerized service
 The Fraud Detection Service requires access to CloudWatch and SQS, which is enabled by associating an IAM policy and role with the ServiceAccount using IRSA (IAM Roles for Service Accounts).
 HPA (Horizontal Pod Autoscaler) is configured to automatically scale the Fraud Detection Service based on CPU usage.
 - **AWS CloudWatch:**  
-To enable amazon-cloudwatch-observability EKS addon for centralized logging and monitoring for the Fraud Detection Service, 
+To enable amazon-cloudwatch-observability EKS addon for centralized logging and monitoring for the Fraud Detection Service. This addon deploys CloudWatch Agent as a DaemonSet on every node, uses Fluent Bit to collect and process container logs, and sends metrics and logs to CloudWatch for centralized viewing. 
 
 # Transaction Processing Flow
 1. **Input Queue:**
@@ -55,12 +55,12 @@ Downstream systems (e.g., manual review systems) consume flagged transactions fr
                             +-------------------+
                                     |
                                     v
-                          +-------------------+
-                          |                   |
-                          | AWS CloudWatch    |
-                          | (Logging/Monitor) |
-                          |                   |
-                          +-------------------+
+                          +-------------------------+
+                          | DeamonSet               |
+                          | AWS CloudWatch Agent    |
+                          | (Logging/Monitor)       |
+                          |                         |
+                          +-------------------------+
 ```
 # Scalability and Resilience
 **Kubernetes (EKS):**  
